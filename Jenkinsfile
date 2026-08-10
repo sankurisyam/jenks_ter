@@ -44,22 +44,26 @@ pipeline {
         }
 
         stage('Terraform Validate') {
-            steps {
-                dir('terraform') {
-                    sh 'terraform init -backend=false'
-                    sh 'terraform validate'
-                }
-            }
+    steps {
+        dir('terraform/environment/dev') {
+            sh '''
+                terraform init -backend=false
+                terraform validate
+            '''
         }
+    }
+}
 
-        stage('Terraform Plan') {
-            steps {
-                dir('terraform') {
-                    sh 'terraform init'
-                    sh 'terraform plan -out=tfplan'
-                }
-            }
+stage('Terraform Plan') {
+    steps {
+        dir('terraform/environment/dev') {
+            sh '''
+                terraform init
+                terraform plan -out=tfplan
+            '''
         }
+    }
+}
 
         stage('Terraform Apply') {
             steps {
