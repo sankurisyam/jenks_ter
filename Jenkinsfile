@@ -11,7 +11,7 @@ pipeline {
             }
         }
 
-        stage('Install dependencies') {
+        stage('Install depen') {
             steps {
                 dir('app') {
                     sh 'npm ci'
