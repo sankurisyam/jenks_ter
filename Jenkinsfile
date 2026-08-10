@@ -57,24 +57,34 @@ pipeline {
         }
 
         stage('Terraform Plan') {
-            steps {
-                dir('terraform/environment/dev') {
-                    sh '''
-                        terraform init
-                        terraform plan -out=tfplan
-                    '''
-                }
+    steps {
+        dir('terraform/environment/dev') {
+            withCredentials([
+                [$class: 'AmazonWebServicesCredentialsBinding',
+                 credentialsId: 'terraform-aws']
+            ]) {
+                sh '''
+                    aws sts get-caller-identity
+                    terraform init
+                    terraform plan -out=tfplan
+                '''
             }
         }
+    }
+}
 
         stage('Terraform Apply') {
             steps {
                 dir('terraform/environment/dev') {
+
                     input message: 'Apply this Terraform plan to AWS?', ok: 'Apply'
 
-                    sh '''
-                        terraform apply tfplan
-                    '''
+                    withCredentials([
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                         credentialsId: 'terraform-aws']
+                    ]) {
+                        sh 'terraform apply tfplan'
+                    }
                 }
             }
         }
