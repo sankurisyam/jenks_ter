@@ -73,7 +73,7 @@ pipeline {
 
     post {
         success {
-            echo ' Pipeline completed'
+            echo ' completed '
         }
         failure {
             echo ' Pipeline failed'
