@@ -1,17 +1,19 @@
 pipeline {
     agent any
 
-    tools{
+    tools {
         nodejs 'node22'
     }
+
     stages {
+
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
 
-        stage('Install depen') {
+        stage('Install Dependencies') {
             steps {
                 dir('app') {
                     sh 'npm ci'
@@ -44,32 +46,35 @@ pipeline {
         }
 
         stage('Terraform Validate') {
-    steps {
-        dir('terraform/environment/dev') {
-            sh '''
-                terraform init -backend=false
-                terraform validate
-            '''
+            steps {
+                dir('terraform/environment/dev') {
+                    sh '''
+                        terraform init -backend=false
+                        terraform validate
+                    '''
+                }
+            }
         }
-    }
-}
 
-stage('Terraform Plan') {
-    steps {
-        dir('terraform/environment/dev') {
-            sh '''
-                terraform init
-                terraform plan -out=tfplan
-            '''
+        stage('Terraform Plan') {
+            steps {
+                dir('terraform/environment/dev') {
+                    sh '''
+                        terraform init
+                        terraform plan -out=tfplan
+                    '''
+                }
+            }
         }
-    }
-}
 
         stage('Terraform Apply') {
             steps {
-                input message: 'Apply Terraform changes to AWS?', ok: 'Apply'
-                dir('terraform') {
-                    sh 'terraform apply tfplan'
+                dir('terraform/environment/dev') {
+                    input message: 'Apply this Terraform plan to AWS?', ok: 'Apply'
+
+                    sh '''
+                        terraform apply tfplan
+                    '''
                 }
             }
         }
@@ -77,10 +82,11 @@ stage('Terraform Plan') {
 
     post {
         success {
-            echo ' completed '
+            echo 'Pipeline completed successfully'
         }
+
         failure {
-            echo ' Pipeline failed'
+            echo 'Pipeline failed'
         }
     }
 }
