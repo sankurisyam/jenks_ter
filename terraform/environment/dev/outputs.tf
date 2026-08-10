@@ -10,12 +10,12 @@ output "bucket_arn" {
 output "aws_key_id" {
   description = "AWS Access Key ID"
   value       = module.iam.aws_key_id
-  sensitive = true
+  sensitive   = true
 
 }
 
 output "secret_access_key" {
   description = "AWS Secret Access Key"
   value       = module.iam.secret_access_key
-  sensitive = true
+  sensitive   = true
 }
