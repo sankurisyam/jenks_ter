@@ -56,24 +56,27 @@ pipeline {
         }
 
         stage('Terraform Plan') {
-            steps {
-                dir('terraform/environment/dev') {
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'terraform-aws']]) {
-                        sh '''
-                            terraform init
+    steps {
+        dir('terraform/environment/dev') {
+            withCredentials([
+                [$class: 'AmazonWebServicesCredentialsBinding',
+                 credentialsId: 'terraform-aws']
+            ]) {
+                sh '''
+                    terraform init
 
-                            rm -f tfplan
+                    terraform import module.iam.aws_iam_user.image_app image-app-user || true
 
-                            terraform import module.iam.aws_iam_user.image_app image-app-user || true
+                    terraform import module.s3.aws_s3_bucket.images imagevault-dev-images-5302 || true
 
-                            terraform import module.s3.aws_s3_bucket.images imagevault-dev-images-5302 || true
+                    terraform import module.iam.aws_iam_policy.image_upload arn:aws:iam::447356678470:policy/image-upload || true
 
-                            terraform plan -out=tfplan
-                        '''
-                    }
-                }
+                    terraform plan -out=tfplan
+                '''
             }
         }
+    }
+}
 
         stage('Terraform Apply') {
             steps {
