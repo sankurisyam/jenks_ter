@@ -74,20 +74,26 @@ pipeline {
 }
 
         stage('Terraform Apply') {
-            steps {
-                dir('terraform/environment/dev') {
+    steps {
+        dir('terraform/environment/dev') {
 
-                    input message: 'Apply this Terraform plan to AWS?', ok: 'Apply'
+            input(
+                message: 'Apply this Terraform plan to AWS?',
+                ok: 'Apply'
+            )
 
-                    withCredentials([
-                        [$class: 'AmazonWebServicesCredentialsBinding',
-                         credentialsId: 'terraform-aws']
-                    ]) {
-                        sh 'terraform apply tfplan'
-                    }
-                }
+            withCredentials([
+                [$class: 'AmazonWebServicesCredentialsBinding',
+                 credentialsId: 'terraform-aws']
+            ]) {
+                sh '''
+                    aws sts get-caller-identity
+                    terraform apply -auto-approve tfplan
+                '''
             }
         }
+    }
+}
     }
 
     post {
