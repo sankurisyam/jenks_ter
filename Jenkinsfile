@@ -6,7 +6,6 @@ pipeline {
     }
 
     stages {
-
         stage('Checkout') {
             steps {
                 checkout scm
@@ -57,43 +56,39 @@ pipeline {
         }
 
         stage('Terraform Plan') {
-    steps {
-        dir('terraform/environment/dev') {
-            withCredentials([
-                [$class: 'AmazonWebServicesCredentialsBinding',
-                 credentialsId: 'terraform-aws']
-            ]) {
-                sh '''
-                    aws sts get-caller-identity
-                    terraform init
-                    terraform plan -out=tfplan
-                '''
+            steps {
+                dir('terraform/environment/dev') {
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'terraform-aws']]) {
+                        sh '''
+                            terraform init
+
+                            rm -f tfplan
+
+                            terraform import module.iam.aws_iam_user.image_app image-app-user || true
+
+                            terraform import module.s3.aws_s3_bucket.images imagevault-dev-images-5302 || true
+
+                            terraform plan -out=tfplan
+                        '''
+                    }
+                }
             }
         }
-    }
-}
 
         stage('Terraform Apply') {
-    steps {
-        dir('terraform/environment/dev') {
+            steps {
+                dir('terraform/environment/dev') {
+                    input message: 'Apply this Terraform plan to AWS?', ok: 'Apply'
 
-            input(
-                message: 'Apply this Terraform plan to AWS?',
-                ok: 'Apply'
-            )
-
-            withCredentials([
-                [$class: 'AmazonWebServicesCredentialsBinding',
-                 credentialsId: 'terraform-aws']
-            ]) {
-                sh '''
-                    aws sts get-caller-identity
-                    terraform apply -auto-approve tfplan
-                '''
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'terraform-aws']]) {
+                        sh '''
+                            aws sts get-caller-identity
+                            terraform apply -auto-approve tfplan
+                        '''
+                    }
+                }
             }
         }
-    }
-}
     }
 
     post {
